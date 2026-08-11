@@ -1,0 +1,55 @@
+{
+  "name": "timetopost-mcp",
+  "version": "0.3.1",
+  "mcpName": "io.github.melmayssonowen/timetopost-mcp",
+  "description": "Official MCP server for TimeToPost \u2014 let AI agents schedule posts, manage approval-gated drafts, read analytics, run AutoSEO workflows, and publish through the real scheduler pipeline.",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://timetopost.co/mcp",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MelMayssonOwen/timetopost-mcp.git"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "mcp-server",
+    "social-media",
+    "scheduler",
+    "instagram",
+    "tiktok",
+    "twitter",
+    "claude",
+    "ai-agent",
+    "timetopost"
+  ],
+  "bin": {
+    "timetopost-mcp": "dist/src/index.js"
+  },
+  "files": [
+    "dist/src",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/src/index.js",
+    "dev": "tsx src/index.ts",
+    "test:smoke": "tsx test/smoke.ts",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.41",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  },
+  "bugs": {
+    "url": "https://github.com/MelMayssonOwen/timetopost-mcp/issues"
+  }
+}
