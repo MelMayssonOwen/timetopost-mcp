@@ -1,41 +1,14 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.melmayssonowen/timetopost-mcp",
-  "description": "Official MCP for TimeToPost: schedule and publish social posts, run an SEO blog, read analytics.",
+  "name": "io.github.MelMayssonOwen/timetopost-mcp",
+  "description": "Official TimeToPost MCP server for social post drafting, scheduling, publishing and approval queues.",
+  "title": "TimeToPost",
   "repository": {
-    "url": "https://github.com/MelMayssonOwen/timetopost.co",
-    "source": "github",
-    "subfolder": "mcp"
+    "url": "https://github.com/MelMayssonOwen/timetopost-mcp",
+    "source": "github"
   },
   "version": "0.3.1",
-  "websiteUrl": "https://timetopost.co/mcp/",
-  "packages": [
-    {
-      "registryType": "npm",
-      "registryBaseUrl": "https://registry.npmjs.org",
-      "identifier": "timetopost-mcp",
-      "version": "0.3.1",
-      "transport": {
-        "type": "stdio"
-      },
-      "environmentVariables": [
-        {
-          "name": "TIMETOPOST_API_URL",
-          "description": "TimeToPost API base URL",
-          "format": "string",
-          "isRequired": true,
-          "default": "https://api.timetopost.co"
-        },
-        {
-          "name": "TIMETOPOST_API_TOKEN",
-          "description": "Personal API token — create one at timetopost.co → Settings → API",
-          "format": "string",
-          "isRequired": true,
-          "isSecret": true
-        }
-      ]
-    }
-  ],
+  "websiteUrl": "https://timetopost.co/docs/mcp/",
   "remotes": [
     {
       "type": "streamable-http",
