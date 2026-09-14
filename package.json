@@ -1,11 +1,11 @@
 {
   "name": "timetopost-mcp",
   "version": "0.3.1",
-  "mcpName": "io.github.melmayssonowen/timetopost-mcp",
+  "mcpName": "io.github.MelMayssonOwen/timetopost-mcp",
   "description": "Official MCP server for TimeToPost \u2014 let AI agents schedule posts, manage approval-gated drafts, read analytics, run AutoSEO workflows, and publish through the real scheduler pipeline.",
   "type": "module",
   "license": "MIT",
-  "homepage": "https://timetopost.co/mcp",
+  "homepage": "https://timetopost.co/docs/mcp/",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/MelMayssonOwen/timetopost-mcp.git"
