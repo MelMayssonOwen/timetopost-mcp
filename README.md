@@ -5,10 +5,14 @@ The official [Model Context Protocol](https://modelcontextprotocol.io) server fo
 manage approval queues, read analytics and run AutoSEO workflows from your AI
 assistant.
 
-**X publishing is live and generally available.** Other social providers are
-capability-gated. Availability depends on your workspace's enabled capabilities
-and connected accounts; call `get_capabilities` and `list_integrations` before
-planning a provider-specific workflow.
+Supported networks: X, Instagram, TikTok (public Direct Post), LinkedIn,
+Threads, Bluesky, YouTube (including Shorts), Mastodon, Telegram, Pinterest,
+Tumblr, WordPress, Whop, Discord, Slack, Lemmy, Dribbble and Kick.
+
+Mirror posting: post on X and it is mirrored to your other connected networks.
+
+The hosted server exposes 70 tools; the npm/stdio package exposes 62 of them.
+Call `get_capabilities` for what your workspace can use.
 
 - Hosted MCP endpoint: **https://api.timetopost.co/mcp**
 - Public setup and tool documentation: **[TimeToPost MCP docs](https://timetopost.co/docs/mcp/)**
