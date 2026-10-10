@@ -8,6 +8,10 @@ Limits for the networks most people schedule to. For anything else, or if a limi
 | Instagram | 2200 characters | Needs hosted media. Text-only posts are not possible. |
 | TikTok | 2200 characters (enforced at post creation) | Needs hosted media and one TikTok account per post. Requires `platformData.tiktok` with choices from the human (privacy, comments, duet, stitch, own-brand or third-party promotion). Call `get_tiktok_creator_info` first, every time. |
 | Threads | 500 characters | |
+| LinkedIn | 3000 characters | |
+| Bluesky | 300 characters | |
+| Mastodon | 500 characters | |
+| Pinterest | 500 characters (pin description) | Needs exactly one image and a `boardId` from `list_boards`. Pin title 100 characters or fewer. |
 
 Rules of thumb:
 
