@@ -6,7 +6,7 @@ Limits for the networks most people schedule to. For anything else, or if a limi
 | --- | --- | --- |
 | X | 280 characters per post | Threads: up to 24 segments, 280 each, published as chained replies. |
 | Instagram | 2200 characters | Needs hosted media. Text-only posts are not possible. |
-| TikTok | 4000 characters | Needs hosted media and one TikTok account per post. Requires `platformData.tiktok` with choices from the human (privacy, comments, duet, stitch, own-brand or third-party promotion). Call `get_tiktok_creator_info` first, every time. |
+| TikTok | 2200 characters (enforced at post creation) | Needs hosted media and one TikTok account per post. Requires `platformData.tiktok` with choices from the human (privacy, comments, duet, stitch, own-brand or third-party promotion). Call `get_tiktok_creator_info` first, every time. |
 | Threads | 500 characters | |
 
 Rules of thumb:
