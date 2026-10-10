@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "timetopost": {
+      "type": "http",
+      "url": "https://api.timetopost.co/mcp"
+    }
+  }
+}

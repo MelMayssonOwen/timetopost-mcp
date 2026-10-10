@@ -45,6 +45,28 @@ For clients that accept URL-based MCP configuration:
 Client-specific setup details are in the [public docs](https://timetopost.co/docs/mcp/).
 You can revoke access from **Settings → API** in TimeToPost.
 
+## Claude Code plugin and skill
+
+This repo is also a Claude Code plugin marketplace. The `timetopost` plugin
+bundles the hosted MCP server and a `schedule-social-posts` skill that runs the
+safe workflow: check the workspace with `whoami`, read recent posts for voice,
+draft first, let a human approve, then schedule.
+
+```text
+/plugin marketplace add MelMayssonOwen/timetopost-mcp
+/plugin install timetopost@timetopost
+```
+
+Then sign in to TimeToPost when Claude Code prompts for MCP authentication.
+
+Other ways to install:
+
+- **Skill only, any harness that reads `SKILL.md` folders.** Copy
+  `plugins/timetopost/skills/schedule-social-posts` into `~/.claude/skills/`
+  (or your project's `.claude/skills/`), and add the MCP server separately.
+- **MCP server only:**
+  `claude mcp add --transport http timetopost https://api.timetopost.co/mcp`
+
 ## Before using tools
 
 1. Call `whoami` to confirm your user, active workspace and credential permissions.

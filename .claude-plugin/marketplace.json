@@ -1,0 +1,23 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "timetopost",
+  "owner": {
+    "name": "Mel Owen",
+    "url": "https://timetopost.co"
+  },
+  "metadata": {
+    "description": "TimeToPost plugins for Claude Code: draft, approve and schedule social posts."
+  },
+  "plugins": [
+    {
+      "name": "timetopost",
+      "source": "./plugins/timetopost",
+      "description": "Draft, approve and schedule social posts with TimeToPost. Drafts first, a human approves before anything goes live.",
+      "version": "0.1.0",
+      "category": "productivity",
+      "keywords": ["social media", "scheduling", "mcp", "timetopost"],
+      "homepage": "https://timetopost.co/docs/mcp/",
+      "license": "MIT"
+    }
+  ]
+}
