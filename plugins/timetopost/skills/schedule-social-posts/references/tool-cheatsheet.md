@@ -1,6 +1,6 @@
 # Tool cheatsheet
 
-Names and inputs come from the TimeToPost MCP server (`src/tools.ts`). Each tool needs a token capability: read, draft or publish (publish includes draft, draft includes read).
+Names and inputs follow the hosted TimeToPost MCP server (https://api.timetopost.co/mcp). The npm/stdio package in `src/tools.ts` has most of them, but `account_ids` (on `create_drafts` variants and `approve_draft`) is hosted-only. Each tool needs a token capability: read, draft or publish (publish includes draft, draft includes read).
 
 ## Orientation (read)
 
@@ -47,8 +47,8 @@ Only the `posts` source can be approved over MCP. Trend, build-in-public and DM 
 
 | Tool | Use |
 | --- | --- |
-| `publish_post` | Queue an existing draft, scheduled or failed post for the next scheduler tick. |
-| `publish_thread` | X thread in one call: `segments[]` (each 280 chars or fewer), optional `schedule_at`, `brand`. Without `schedule_at` it goes out on the next tick. |
+| `publish_post` | Queue an existing draft, scheduled or failed post for the next scheduler tick. Goes live. Only when the user explicitly asks. |
+| `publish_thread` | Goes live. Only when the user explicitly asks. X thread in one call: `segments[]` (each 280 chars or fewer), optional `schedule_at`, `brand`. Without `schedule_at` it goes out on the next tick. |
 | `cancel_post` | Delete a post, including a scheduled one. |
 
 ## Other
