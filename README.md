@@ -7,7 +7,7 @@ assistant.
 
 Supported networks: Instagram, X, TikTok, Threads, Bluesky, Mastodon, Nostr,
 Pixelfed, Telegram, Tumblr, WordPress, Ghost, DEV, Whop, Listmonk and Buttondown.
-Coming soon: LinkedIn, YouTube, Pinterest, Discord, Slack, Lemmy, Dribbble and Kick.
+Coming soon: LinkedIn, YouTube, Pinterest, Discord, Slack, Lemmy, Dribbble, Kick, Twitch and Farcaster.
 
 Mirror posting: post on X and it is mirrored to your other connected networks.
 
