@@ -5,9 +5,9 @@ The official [Model Context Protocol](https://modelcontextprotocol.io) server fo
 manage approval queues, read analytics and run AutoSEO workflows from your AI
 assistant.
 
-Supported networks: X, Instagram, TikTok (public Direct Post), LinkedIn,
-Threads, Bluesky, YouTube (including Shorts), Mastodon, Telegram, Pinterest,
-Tumblr, WordPress, Whop, Discord, Slack, Lemmy, Dribbble and Kick.
+Supported networks: Instagram, X, TikTok, Threads, Bluesky, Mastodon, Nostr,
+Pixelfed, Telegram, Tumblr, WordPress, Ghost, DEV, Whop, Listmonk and Buttondown.
+Coming soon: LinkedIn, YouTube, Pinterest, Discord, Slack, Lemmy, Dribbble, Kick, Twitch and Farcaster.
 
 Mirror posting: post on X and it is mirrored to your other connected networks.
 
@@ -79,18 +79,23 @@ Draft-only credentials can prepare drafts; actions that schedule or publish
 content require publish permission. Account permissions, workspace scoping,
 validation and plan limits are enforced by the TimeToPost API.
 
-## Tool examples
+## Tools
 
 Discover the available tools through your client's MCP tool list and use
-`get_capabilities` for current workflow details.
+`get_capabilities` for current workflow details. The 70 hosted tools by area:
 
-| Workflow | Example tools |
+| Workflow | Tools |
 | --- | --- |
-| Account and capabilities | `whoami`, `get_capabilities`, `list_integrations` |
-| Posts and publishing | `list_posts`, `get_post`, `schedule_post`, `publish_post`, `cancel_post`, `publish_thread` |
-| Drafts and approvals | `create_drafts`, `list_drafts`, `approve_draft`, `reject_draft`, `list_approvals` |
-| Analytics and timing | `get_engagement_summary`, `get_optimal_times`, `get_post_metrics`, `scheduler_status` |
-| AutoSEO | `autoseo_connect_site`, `autoseo_integration_kit`, `autoseo_verify_site`, `autoseo_list_sites`, `autoseo_configure`, `autoseo_generate_post` |
+| Account and capabilities | `whoami`, `get_capabilities`, `list_integrations`, `connect_account_link`, `get_tiktok_creator_info`, `list_boards`, `list_lemmy_communities`, `list_slack_channels` |
+| Posts and publishing | `list_posts`, `get_post`, `schedule_post`, `publish_post`, `cancel_post`, `publish_thread`, `scheduler_status` |
+| Media and video | `upload_media`, `prepare_media_upload`, `finalize_media_upload`, `shorts_generate`, `shorts_status`, `generate_short_video` |
+| Drafts and approvals | `create_drafts`, `create_digest_drafts`, `create_posts_from_source`, `list_drafts`, `approve_draft`, `reject_draft`, `list_approvals`, `list_sources`, `get_source_status` |
+| Analytics and timing | `get_engagement_summary`, `get_engagement_by_tag`, `get_optimal_times`, `get_post_metrics`, `list_brands`, `calculate_engagement`, `build_campaign_urls`, `best_time_teaser` |
+| Voice, prompts and personas | `prompt_suggest`, `prompt_library_list`, `persona_create`, `persona_list`, `persona_status`, `add_to_collection` |
+| Build in public and DM funnels | `build_in_public_connect_link`, `build_in_public_status`, `create_dm_funnel`, `list_dm_funnels`, `list_funnel_hits` |
+| AutoSEO and articles | `autoseo_connect_site`, `autoseo_integration_kit`, `autoseo_verify_site`, `autoseo_list_sites`, `autoseo_configure`, `autoseo_auto_configure`, `autoseo_propose_topics`, `autoseo_generate_post`, `read_article_draft`, `edit_article_draft`, `review_article_draft`, `list_articles`, `get_article`, `update_article` |
+| SEO and GEO research | `keyword_research`, `keyword_add_to_plan`, `keyword_snapshot`, `seo_audit`, `geo_visibility_check` |
+| Guides and free tools | `list_use_cases`, `list_free_tools` |
 
 For example, ask your assistant to prepare X post drafts for review, recommend
 posting times from your engagement history, or summarize recent post performance.

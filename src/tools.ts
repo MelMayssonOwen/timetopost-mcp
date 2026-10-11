@@ -33,7 +33,7 @@ function toContent(result: ApiResult) {
 
 async function requestWithMcpHeader(
   api: TimeToPostApi,
-  method: 'GET' | 'POST' | 'DELETE',
+  method: 'GET' | 'POST' | 'PATCH' | 'DELETE',
   path: string,
   body?: unknown
 ): Promise<ApiResult> {
@@ -43,13 +43,23 @@ async function requestWithMcpHeader(
 // Providers connect_account_link hands out a deep link for. Mirrors the hosted
 // surface (backend/src/mcp/server.ts) so the two stay in parity.
 const CONNECT_PROVIDERS = [
+  'listmonk',
+  'farcaster',
+  'dribbble',
+  'mastodon',
+  'pixelfed',
+  'discord',
+  'lemmy',
+  'twitch',
+  'slack',
+  'kick',
   'instagram',
   'twitter',
   'tiktok',
   'facebook',
   'pinterest',
   'youtube',
-  'linkedin',
+  'linkedin', 'linkedin_page',
   'reddit',
   'threads',
 ] as const;
@@ -79,6 +89,8 @@ export const TOOL_CAPABILITIES: Record<string, 'read' | 'draft' | 'publish'> = {
   get_tiktok_creator_info: 'read',
   add_to_collection: 'draft',
   connect_account_link: 'read',
+  list_lemmy_communities: 'read',
+  list_slack_channels: 'read',
   list_boards: 'read',
   list_posts: 'read',
   get_post: 'read',
@@ -93,6 +105,12 @@ export const TOOL_CAPABILITIES: Record<string, 'read' | 'draft' | 'publish'> = {
   scheduler_status: 'read',
   create_digest_drafts: 'draft',
   create_drafts: 'draft',
+  read_article_draft: 'read',
+  edit_article_draft: 'draft',
+  review_article_draft: 'draft',
+  list_articles: 'read',
+  get_article: 'read',
+  update_article: 'publish',
   list_drafts: 'read',
   approve_draft: 'publish',
   reject_draft: 'draft',
@@ -150,6 +168,8 @@ export const TOOL_ANNOTATIONS: Record<keyof typeof TOOL_CAPABILITIES, ToolAnnota
   get_tiktok_creator_info: { title: 'Get TikTok Creator Info', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
   add_to_collection: { title: 'Add To Collection', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
   connect_account_link: { title: 'Connect Account Link', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  list_lemmy_communities: { title: 'List Lemmy Communities', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  list_slack_channels: { title: 'List Slack Channels', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
   list_boards: { title: 'List Boards', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   list_posts: { title: 'List Posts', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   get_post: { title: 'Get Post', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
@@ -164,6 +184,12 @@ export const TOOL_ANNOTATIONS: Record<keyof typeof TOOL_CAPABILITIES, ToolAnnota
   scheduler_status: { title: 'Scheduler Status', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   create_digest_drafts: { title: 'Create Digest Drafts', readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   create_drafts: { title: 'Create Drafts', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+  read_article_draft: { title: 'Read Article Draft', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  edit_article_draft: { title: 'Edit Article Draft', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+  review_article_draft: { title: 'Review Article Draft', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+  list_articles: { title: 'List Articles', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  get_article: { title: 'Get Article', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  update_article: { title: 'Update Live Article', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: true },
   list_drafts: { title: 'List Drafts', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   approve_draft: { title: 'Approve Draft', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
   reject_draft: { title: 'Reject Draft', readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true },
@@ -339,7 +365,7 @@ export function registerTools(mcpServer: McpServer, apiFor: ApiFor) {
     'list_integrations',
     {
       title: 'List connected accounts',
-      description: 'List the social/platform integrations for the active org and their connection status.',
+      description: 'List the social/platform integrations for the active org and their connection status. Kick requires exactly one explicitly selected integration id in accountIds and its trusted metadata.broadcasterUserId for its own channel.',
       inputSchema: {},
     },
     async (_args, extra) => toContent(await api(extra).get('/api/integrations'))
@@ -474,6 +500,17 @@ export function registerTools(mcpServer: McpServer, apiFor: ApiFor) {
   );
 
   server.registerTool(
+    'list_lemmy_communities',
+    { title: 'List Lemmy Communities', description: 'List eligible local public communities for one Lemmy API v3 account. Follow nextCursor. Schedule with accountIds and platformData.lemmy {integrationId, communityId, title, url?}. Connect manually in settings; never send session tokens through chat or MCP.', inputSchema: { accountId: z.string().min(1), cursor: z.string().optional() } },
+    async (args, extra) => toContent(await api(extra).get(`/api/integrations/lemmy/communities?${new URLSearchParams({ accountId: args.accountId, ...(args.cursor ? { cursor: args.cursor } : {}) })}`))
+  );
+  server.registerTool(
+    'list_slack_channels',
+    { title: 'List Slack channels', description: 'List joined channels for one Slack integration in the active workspace. Follow nextCursor and choose a channel. Schedule text/links with accountIds containing accountId and platformData.slack containing integrationId: accountId and channelId.', inputSchema: { accountId: z.string().min(1), cursor: z.string().optional() } },
+    async (args, extra) => toContent(await api(extra).get(`/api/integrations/slack/channels?${new URLSearchParams({ accountId: args.accountId, ...(args.cursor ? { cursor: args.cursor } : {}) })}`))
+  );
+
+  server.registerTool(
     'list_boards',
     {
       title: 'List Pinterest boards',
@@ -526,11 +563,17 @@ export function registerTools(mcpServer: McpServer, apiFor: ApiFor) {
     {
       title: 'Schedule / draft a post',
       description:
+        'DRIBBBLE: set platformData.dribbble.title (1–200 characters) and exactly one GIF/JPG/PNG image <=8MB, exactly 400x300 or 800x600. Select one account with image-upload permission via accountIds. No text-only posts, videos, or threads. Accepted uploads may be processing; uncertain delivery holds automatic retries. ' +
         'Create a post. Provide a future ISO scheduledAt to schedule it (omit for a draft). platforms are provider keys like "instagram", "tiktok", "twitter", "pinterest". For TIKTOK, platformData.tiktok is REQUIRED and every field in it must be an answer YOU GOT FROM THE HUMAN: who can see the post (privacy), whether comments, duet and stitch are allowed, and whether it promotes their own brand or a third party. Never invent, assume or default those values, and never carry them over from a previous post: TikTok requires the creator to choose them with nothing pre-selected. Call get_tiktok_creator_info first to see the audiences this account may pick and which interactions it has switched off. An incomplete block is rejected naming the fields still missing; in a mixed request only TikTok is refused and the other platforms are still scheduled. TikTok needs mediaUrls and posts to ONE TikTok account at a time. For PINTEREST, mediaUrls must contain exactly one image URL, and platformData.pinterest.boardId is REQUIRED — call list_boards first to get a valid boardId; content becomes the pin description (≤500 chars), platformData.pinterest.title is the pin title (≤100 chars). Optional brand: a niche/play attribution tag for per-play engagement rollups (auto-registers; see list_brands) — NOT the AI BrandVoice writing-style profile. ' +
+        'YOUTUBE SHORTS: set platformData.youtube.short=true to publish a YouTube Short (there is no separate Shorts API: the video must be vertical or square and at most 3 minutes, otherwise it is refused with a plain error). The title is optional and defaults to the first line of content (max 100 chars); #Shorts is appended to the description if missing; privacy defaults to private (platformData.youtube.privacyStatus). The published URL is stored as https://youtube.com/shorts/<id>. ' +
+        'KICK CHAT: one plain-text message, at most 500 grapheme clusters and 2048 UTF-8 bytes, sent as the connected customer to their own channel only. Select exactly one Kick integration from list_integrations in accountIds and set platformData.kick = {integrationId: that id, broadcasterUserId: its metadata.broadcasterUserId}. Do not invent a channel ID or choose an arbitrary audience. No feed posts, video, media, threads, or other unsupported post fields. An uncertain send is held for review and must never be automatically resubmitted. ' +
         WRITING_STYLE_GUIDELINE,
-      inputSchema: {
+      inputSchema: z.object({
         content: z.string().describe('Post text/caption'),
-        platforms: z.array(z.string()).min(1).describe('Target platform provider keys'),
+        platforms: z.array(z.string()).min(1).describe('Target platform provider keys, including kick for own-channel chat'),
+        accountIds: z.array(z.string().min(1)).min(1).optional().describe('Explicit integration ids from list_integrations. Kick and Dribbble each require exactly one selected account of that provider.'),
+        collection: z.string().min(1).optional().describe('Named group of accounts; Kick still requires its explicit accountIds selection.'),
+        allAccounts: z.boolean().optional().describe('Explicit fan-out for supported providers; never replaces the required Kick account selection.'),
         scheduledAt: z
           .string()
           .optional()
@@ -543,6 +586,18 @@ export function registerTools(mcpServer: McpServer, apiFor: ApiFor) {
           .describe('X/Twitter thread: tweets 2..N published as chained replies to content'),
         platformData: z
           .object({
+            listmonk: z.object({
+              subject: z.string().trim().min(1).max(998).regex(/^[^\r\n]+$/),
+              contentType: z.enum(['plain', 'html']).default('plain'),
+            }).strict().optional().describe('Required for Listmonk: email subject and body format. content is the email body; select exactly one mailing list via accountIds. No attachments or threads.'),
+            dribbble: z.object({ title: z.string().trim().min(1).max(200) }).strict().optional(),
+            mastodon: z.object({ visibility: z.enum(['private', 'unlisted', 'public']).optional() }).strict().optional().describe('Defaults to followers only (private).'),
+            pixelfed: z.object({ visibility: z.enum(['private', 'unlisted', 'public']).optional() }).strict().optional().describe('Defaults to public. Pixelfed posts need 1 to 4 images.'),
+            lemmy: z.object({ integrationId: z.string().min(1), communityId: z.number().int().positive(), title: z.string().min(1).max(200), url: z.string().url().optional() }).strict().optional(),
+            twitch: z.object({ integrationId: z.string().min(1), broadcasterId: z.string().regex(/^\d+$/), sharedChatAcknowledged: z.literal(true) }).strict().describe('Own-channel text chat, maximum 500 characters; no attachments or threads. Acknowledge that user-token messages reach every Shared Chat session channel.').optional(),
+            youtube: z.object({ privacyStatus: z.enum(['private', 'unlisted', 'public']).optional().describe('Defaults to private.'), short: z.boolean().optional().describe('Publish as a YouTube Short: vertical or square video, at most 3 minutes.'), title: z.string().trim().max(100).optional().describe('Optional; defaults to the first line of content, max 100 chars.') }).strict().optional().describe('YouTube options. short=true publishes a Short; #Shorts is appended to the description if missing.'),
+            slack: z.object({ integrationId: z.string().min(1), channelId: z.string().regex(/^[CG][A-Z0-9]{8,}$/) }).strict().optional(),
+            kick: z.object({ integrationId: z.string().min(1), broadcasterUserId: z.number().int().positive().max(Number.MAX_SAFE_INTEGER) }).strict().optional().describe('Own-channel chat only. Use the selected integration id and its trusted metadata.broadcasterUserId from list_integrations.'),
             pinterest: z
               .object({
                 boardId: z.string().describe('Required. Get valid ids from list_boards.'),
@@ -571,20 +626,24 @@ export function registerTools(mcpServer: McpServer, apiFor: ApiFor) {
                 'REQUIRED when tiktok is a target platform. Every value must come from the human, asked for this post. Do not invent them.'
               ),
           })
+          .strict()
           .optional()
-          .describe('Platform-specific fields: pinterest pin fields, and the TikTok posting choices'),
+          .describe('Platform-specific fields, including required Kick account and own-channel binding'),
         brand: z
           .string()
           .max(60)
           .optional()
           .describe('Brand/niche tag for per-play engagement rollups (auto-registers)'),
-      },
+      }).strict(),
     },
-    async ({ content, platforms, scheduledAt, mediaUrls, thread, platformData, brand }, extra) =>
+    async ({ content, platforms, accountIds, collection, allAccounts, scheduledAt, mediaUrls, thread, platformData, brand }, extra) =>
       toContent(
         await api(extra).post('/api/posts', {
           content,
           platforms,
+          accountIds,
+          collection,
+          allAccounts,
           scheduledAt,
           mediaUrls,
           thread,
@@ -678,6 +737,12 @@ export function registerTools(mcpServer: McpServer, apiFor: ApiFor) {
             .string()
             .optional()
             .describe('"optimal" or a future ISO datetime'),
+          account_ids: z
+            .array(z.string())
+            .optional()
+            .describe(
+              'Integration id(s) from list_integrations the approved post must target. REQUIRED when the org has more than one connected account on this platform, otherwise approval is refused as ambiguous.'
+            ),
         })
       )
       .min(1)
@@ -694,6 +759,7 @@ export function registerTools(mcpServer: McpServer, apiFor: ApiFor) {
         link?: string;
         media?: Array<{ url: string; alt?: string }>;
         schedule_hint?: string;
+        account_ids?: string[];
       }>;
     },
     extra: unknown
@@ -709,6 +775,7 @@ export function registerTools(mcpServer: McpServer, apiFor: ApiFor) {
           link: v.link,
           media: v.media,
           scheduleHint: v.schedule_hint,
+          accountIds: v.account_ids,
         })),
       })
     );
@@ -718,7 +785,7 @@ export function registerTools(mcpServer: McpServer, apiFor: ApiFor) {
     {
       title: 'Create engine drafts (pending approval)',
       description:
-        'Submit a batch of platform drafts for one engine artifact (e.g. a digest issue). Drafts are ALWAYS created pending_approval and NEVER auto-publish — a human must approve_draft (or use the dashboard) first. Idempotent on external_ref: resends update still-pending drafts, never duplicate or resurrect decided ones. platform accepts provider keys (twitter|linkedin|instagram|tiktok|wordpress|...) plus aliases x/x_post/x_thread (→ twitter). segments: 1 element = single post; 2+ on twitter = thread. link is appended to the final segment at approval when absent. schedule_hint: "optimal" or a future ISO datetime. ' +
+        'Submit a batch of platform drafts for one engine artifact (e.g. a digest issue). Drafts are ALWAYS created pending_approval and NEVER auto-publish — a human must approve_draft (or use the dashboard) first. Idempotent on external_ref: resends update still-pending drafts, never duplicate or resurrect decided ones, and never overwrite a pending draft a human edited in the dashboard. platform accepts provider keys (twitter|linkedin|instagram|tiktok|wordpress|...) plus aliases x/x_post/x_thread (→ twitter). segments: 1 element = single post; 2+ on twitter = thread. link is appended to the final segment at approval when absent. schedule_hint: "optimal" or a future ISO datetime. account_ids: integration id(s) from list_integrations the post must target; REQUIRED when the org has several connected accounts on the platform, or approval is refused as ambiguous. ' +
         'Alias: create_drafts is the same tool under a name that doesn\'t imply "digest-only" — the mechanism is generic to any engine artifact. ' +
         WRITING_STYLE_GUIDELINE,
       inputSchema: createDraftsInputSchema,
@@ -731,12 +798,134 @@ export function registerTools(mcpServer: McpServer, apiFor: ApiFor) {
     {
       title: 'Create engine drafts (pending approval)',
       description:
-        'Call prompt_suggest first and base the prompt on the top result. Submit a batch of platform drafts for one engine artifact (a digest issue, a generated content batch, anything). Drafts are ALWAYS created pending_approval and NEVER auto-publish — a human must approve_draft (or use the dashboard) first. Idempotent on external_ref: resends update still-pending drafts, never duplicate or resurrect decided ones. platform accepts provider keys (twitter|linkedin|instagram|tiktok|wordpress|...) plus aliases x/x_post/x_thread (→ twitter). segments: 1 element = single post; 2+ on twitter = thread. link is appended to the final segment at approval when absent. schedule_hint: "optimal" or a future ISO datetime. ' +
+        'Call prompt_suggest first and base the prompt on the top result. Submit a batch of platform drafts for one engine artifact (a digest issue, a generated content batch, anything). Drafts are ALWAYS created pending_approval and NEVER auto-publish — a human must approve_draft (or use the dashboard) first. Idempotent on external_ref: resends update still-pending drafts, never duplicate or resurrect decided ones, and never overwrite a pending draft a human edited in the dashboard. platform accepts provider keys (twitter|linkedin|instagram|tiktok|wordpress|...) plus aliases x/x_post/x_thread (→ twitter). segments: 1 element = single post; 2+ on twitter = thread. link is appended to the final segment at approval when absent. schedule_hint: "optimal" or a future ISO datetime. account_ids: integration id(s) from list_integrations the post must target; REQUIRED when the org has several connected accounts on the platform, or approval is refused as ambiguous. ' +
         'This is the same underlying batch-draft mechanism as create_digest_drafts (kept for existing integrations) — this name drops the misleading "digest" implication; prefer this name for new integrations. ' +
         WRITING_STYLE_GUIDELINE,
       inputSchema: createDraftsInputSchema,
     },
     createDraftsHandler
+  );
+
+  const articleIdSchema = z.string().min(1).describe('Article or article draft id');
+  const articleExpectedUpdatedAtSchema = z
+    .string()
+    .datetime()
+    .describe('Current updatedAt timestamp from the latest read, used to prevent overwriting concurrent edits');
+  const articleEditableFields = {
+    expectedUpdatedAt: articleExpectedUpdatedAtSchema,
+    title: z.string().min(1).max(200).optional().describe('Article title, up to 200 characters'),
+    excerpt: z.string().max(500).optional().describe('Article excerpt, up to 500 characters'),
+    bodyMarkdown: z.string().max(65000).optional().describe('Markdown article body, up to 65,000 characters'),
+    tags: z
+      .array(z.string().min(1).max(50))
+      .max(20)
+      .optional()
+      .describe('Up to 20 article tags, each up to 50 characters'),
+  };
+
+  server.registerTool(
+    'read_article_draft',
+    {
+      title: 'Read Article Draft',
+      description: 'Read an AutoSEO article draft by id, including its editable content and updatedAt concurrency timestamp.',
+      inputSchema: {
+        draft_id: articleIdSchema.describe('Article draft id'),
+      },
+    },
+    async ({ draft_id }, extra) =>
+      toContent(await requestWithMcpHeader(apiFor(extra), 'GET', `/api/articles/drafts/${encodeURIComponent(draft_id)}`))
+  );
+
+  server.registerTool(
+    'edit_article_draft',
+    {
+      title: 'Edit Article Draft',
+      description: 'Edit an AutoSEO article draft. Supply expectedUpdatedAt from the latest read to prevent lost updates.',
+      inputSchema: {
+        draft_id: articleIdSchema.describe('Article draft id'),
+        ...articleEditableFields,
+      },
+    },
+    async ({ draft_id, expectedUpdatedAt, title, excerpt, bodyMarkdown, tags }, extra) =>
+      toContent(
+        await requestWithMcpHeader(apiFor(extra), 'PATCH', `/api/articles/drafts/${encodeURIComponent(draft_id)}`, {
+          expectedUpdatedAt,
+          title,
+          excerpt,
+          bodyMarkdown,
+          tags,
+        })
+      )
+  );
+
+  server.registerTool(
+    'review_article_draft',
+    {
+      title: 'Review Article Draft',
+      description: 'Request editorial review of an AutoSEO article draft. This may use external sources to verify article claims.',
+      inputSchema: {
+        draft_id: articleIdSchema.describe('Article draft id'),
+      },
+    },
+    async ({ draft_id }, extra) =>
+      toContent(
+        await requestWithMcpHeader(apiFor(extra), 'POST', `/api/articles/drafts/${encodeURIComponent(draft_id)}/review`)
+      )
+  );
+
+  server.registerTool(
+    'list_articles',
+    {
+      title: 'List Articles',
+      description: 'List published articles visible to the active organization, optionally filtered by site.',
+      inputSchema: {
+        siteId: z.string().min(1).optional().describe('Optional connected AutoSEO site id'),
+        page: z.number().int().min(1).optional().describe('Results page, starting at 1'),
+      },
+    },
+    async ({ siteId, page }, extra) => {
+      const params = new URLSearchParams();
+      if (siteId) params.set('siteId', siteId);
+      if (page !== undefined) params.set('page', String(page));
+      const query = params.toString();
+      return toContent(await requestWithMcpHeader(apiFor(extra), 'GET', `/api/articles${query ? `?${query}` : ''}`));
+    }
+  );
+
+  server.registerTool(
+    'get_article',
+    {
+      title: 'Get Article',
+      description: 'Get a published article by id, including its current updatedAt concurrency timestamp.',
+      inputSchema: {
+        article_id: articleIdSchema.describe('Published article id'),
+      },
+    },
+    async ({ article_id }, extra) =>
+      toContent(await requestWithMcpHeader(apiFor(extra), 'GET', `/api/articles/${encodeURIComponent(article_id)}`))
+  );
+
+  server.registerTool(
+    'update_article',
+    {
+      title: 'Update Live Article',
+      description:
+        'HUMAN GATE: update an already-published live article. Only call this after the user has explicitly asked to change the live article. Supply expectedUpdatedAt from the latest get_article response to prevent lost updates.',
+      inputSchema: {
+        article_id: articleIdSchema.describe('Published article id'),
+        ...articleEditableFields,
+      },
+    },
+    async ({ article_id, expectedUpdatedAt, title, excerpt, bodyMarkdown, tags }, extra) =>
+      toContent(
+        await requestWithMcpHeader(apiFor(extra), 'PATCH', `/api/articles/${encodeURIComponent(article_id)}`, {
+          expectedUpdatedAt,
+          title,
+          excerpt,
+          bodyMarkdown,
+          tags,
+        })
+      )
   );
 
   server.registerTool(
@@ -764,18 +953,25 @@ export function registerTools(mcpServer: McpServer, apiFor: ApiFor) {
     {
       title: 'Approve + schedule a draft (human gate)',
       description:
-        'HUMAN GATE: approve a pending draft and schedule the real post in one step. Only call this when the human operator has reviewed the draft and told you to approve it — never approve autonomously. Optional edits: replacement segments and/or an explicit future scheduled_for (otherwise schedule_hint is resolved: "optimal" → the org\'s best-times model, fallback +2h). Multi-segment twitter drafts publish as a thread.',
+        'HUMAN GATE: approve a pending draft and schedule the real post in one step. Only call this when the human operator has reviewed the draft and told you to approve it — never approve autonomously. Optional edits: replacement segments and/or an explicit future scheduled_for (otherwise schedule_hint is resolved: "optimal" → the org\'s best-times model, fallback +2h). Multi-segment twitter drafts publish as a thread. ACCOUNT TARGET: in an org with several connected accounts on the draft\'s platform, pass account_ids (or create the draft with account_ids); approval never guesses and the scheduler never fans out.',
       inputSchema: {
         draft_id: z.string(),
         segments: z.array(z.string().min(1)).min(1).max(24).optional(),
         scheduled_for: z.string().optional().describe('Future ISO datetime override'),
+        account_ids: z
+          .array(z.string())
+          .optional()
+          .describe(
+            'Integration id(s) from list_integrations to post to. Required when the org has several connected accounts on the draft\'s platform and the draft was created without account_ids; an ambiguous approve is refused with the accounts to pick from.'
+          ),
       },
     },
-    async ({ draft_id, segments, scheduled_for }, extra) =>
+    async ({ draft_id, segments, scheduled_for, account_ids }, extra) =>
       toContent(
         await api(extra).post(`/api/drafts/${encodeURIComponent(draft_id)}/approve`, {
           ...(segments ? { segments } : {}),
           ...(scheduled_for ? { scheduledFor: scheduled_for } : {}),
+          ...(account_ids && account_ids.length > 0 ? { accountIds: account_ids } : {}),
         })
       )
   );
@@ -840,7 +1036,8 @@ export function registerTools(mcpServer: McpServer, apiFor: ApiFor) {
     {
       title: 'Generate an AI Short draft',
       description:
-        'Call prompt_suggest first and base the prompt on the top result. Generate an approval-ready AI Short from an existing source and place it in the human review rail as a PENDING EngineDraft. Pro-only and allowance-capped before model/media spend. source.kind accepts "autoseo" with articlePostId, "ship-digest" with text/title/url, "trend" with draftId, "template" with slug/variables, or "raw" with title/text/url. The backend produces a grounded script JSON, an ElevenLabs voiceover with word timings when configured (OpenAI TTS plus Whisper fallback), a ShortSpec for the client renderer, stores the audio in object storage, and returns draftId/spec/script. It never publishes. The human must render/approve later via the dashboard or attach-render flow.',
+        'Call prompt_suggest first and base the prompt on the top result. Generate an approval-ready AI Short from an existing source and place it in the human review rail as a PENDING EngineDraft. Pro-only and allowance-capped before model/media spend. source.kind accepts "autoseo" with articlePostId, "ship-digest" with text/title/url, "trend" with draftId, "template" with slug/variables, or "raw" with title/text/url. The backend produces a grounded script JSON, an ElevenLabs voiceover with word timings when configured (OpenAI TTS plus Whisper fallback), a ShortSpec for the client renderer, stores audio in Minio, and returns draftId/spec/script. It never publishes. The human must render/approve later via the dashboard or attach-render flow.' +
+        ' Pass format "tutorial" for the faceless step-by-step tutorial (hook text in frame 1, numbered steps, word-by-word pop captions, and a comment-keyword end card such as Comment POST), or "faceless_quote" for short original lines over a background. keyword threads one search keyword through the on-screen text, the script and the caption. screens attaches your own screenshots (publicUrl from finalize_media_upload) to the first steps, each with an optional zoomTo rect in 0..1 image coordinates.',
       inputSchema: {
         source: z
           .record(z.any())
@@ -849,9 +1046,28 @@ export function registerTools(mcpServer: McpServer, apiFor: ApiFor) {
         brand: z.string().optional().describe('Optional brand/niche attribution tag for per-play rollups'),
         scheduleHint: z.string().optional().describe('Optional "optimal" or future ISO datetime hint'),
         personaId: z.string().optional().describe('Optional active AI Presenter persona id'),
+        format: z
+          .enum(['standard', 'tutorial', 'faceless_quote'])
+          .optional()
+          .describe('Script format. Defaults to standard.'),
+        keyword: z.string().optional().describe('Optional search keyword shown on screen, spoken, and placed in the caption'),
+        commentKeyword: z.string().optional().describe('Tutorial CTA word viewers comment, e.g. POST. Defaults to POST'),
+        screens: z
+          .array(
+            z.object({
+              url: z.string().describe('Hosted image URL (PNG/JPEG)'),
+              zoomTo: z
+                .object({ x: z.number(), y: z.number(), width: z.number(), height: z.number() })
+                .optional()
+                .describe('Region to zoom into, normalized 0..1'),
+            })
+          )
+          .max(5)
+          .optional()
+          .describe('Up to 5 of your own screenshots for the first steps, in order'),
       },
     },
-    async ({ source, platforms, brand, scheduleHint, personaId }, extra) =>
+    async ({ source, platforms, brand, scheduleHint, personaId, format, keyword, commentKeyword, screens }, extra) =>
       toContent(
         await api(extra).post('/api/shorts/generate', {
           source,
@@ -859,6 +1075,10 @@ export function registerTools(mcpServer: McpServer, apiFor: ApiFor) {
           brand,
           scheduleHint,
           personaId,
+          format,
+          keyword,
+          commentKeyword,
+          screens,
         })
       )
   );
@@ -1368,10 +1588,11 @@ export function registerTools(mcpServer: McpServer, apiFor: ApiFor) {
         'social announcements (twitter/linkedin) for the human to review and approve — like everything ' +
         'else, this NEVER auto-posts. It is OFF BY DEFAULT: pass { enabled: true } only when the user has ' +
         'explicitly asked for blog posts to generate social announcements, optionally narrowing platforms ' +
-        'to just one (default both once enabled). publicBaseUrl only matters for the "git_pr" connector: ' +
-        'set it to the real deployed blog base URL (e.g. "https://blog.acme.com") so social announcements ' +
-        'link to the live article — without it, git-connected sites skip the social repurpose rather than ' +
-        'ever link a post at a GitHub PR URL. Call this after autoseo_verify_site confirms the site is ' +
+        'to just one (default both once enabled). publicBaseUrl is the reader-facing article base ' +
+        '(e.g. "https://imperio-app.com/blog") for ANY connector — canonical URL and JSON-LD use it, and ' +
+        'git_pr social announcements need it so they never link a GitHub PR. Webhook write endpoints ' +
+        '(/autoseo-publish) must never be used as publicBaseUrl. publisherName/publisherUrl/authorName/' +
+        'authorType set JSON-LD identity (default: workspace name as Organization). Call this after autoseo_verify_site confirms the site is ' +
         'live, and ideally after autoseo_propose_topics so topics/pillars reflect an approved plan rather ' +
         'than a guess.',
       inputSchema: {
@@ -1405,6 +1626,27 @@ export function registerTools(mcpServer: McpServer, apiFor: ApiFor) {
           .enum(['draft', 'auto'])
           .optional()
           .describe('"draft" (default, recommended) queues posts for human approval; "auto" publishes unattended — only with explicit user opt-in'),
+        editorialReview: z
+          .object({
+            enabled: z
+              .boolean()
+              .describe('Legacy compatibility field. Mandatory when editorialReview is supplied; accepted safely but ignored.'),
+            verifiedFacts: z
+              .array(
+                z.object({
+                  claim: z.string().min(1).describe('Claim verified by editorial review'),
+                  sourceUrl: z.string().url().describe('Source URL supporting the claim'),
+                  jurisdiction: z.string().optional().describe('Jurisdiction in which the fact applies'),
+                  validAsOf: z.string().optional().describe('Date or timestamp as of which the fact was verified'),
+                  notes: z.string().optional().describe('Optional verification notes'),
+                })
+              )
+              .max(20)
+              .optional()
+              .describe('Up to 20 verified facts available to article generation and review'),
+          })
+          .optional()
+          .describe('Optional editorial review configuration and verified factual sources.'),
         socialRepurpose: z
           .object({
             enabled: z
@@ -1430,14 +1672,38 @@ export function registerTools(mcpServer: McpServer, apiFor: ApiFor) {
           .url()
           .optional()
           .describe(
-            'git_pr connector ONLY: the real public base URL the site is deployed to (e.g. ' +
-              '"https://blog.acme.com"), used to build the social-repurpose link. Without it, git-connected ' +
-              "sites skip the blog->social repurpose (their publish result is a GitHub PR URL, never a live article)."
+            'Reader-facing article base URL (e.g. "https://imperio-app.com/blog") for canonical + JSON-LD ' +
+              'on every connector, and for git_pr social-repurpose links. Never the webhook write URL.'
+          ),
+        publisherName: z
+          .string()
+          .optional()
+          .describe('JSON-LD publisher.name (Organization). Defaults to the workspace name.'),
+        publisherUrl: z
+          .string()
+          .url()
+          .optional()
+          .describe('JSON-LD publisher.url, e.g. "https://imperio-app.com".'),
+        authorName: z
+          .string()
+          .optional()
+          .describe('JSON-LD author.name. Defaults to publisherName.'),
+        authorType: z
+          .enum(['Person', 'Organization'])
+          .optional()
+          .describe('JSON-LD author @type. Default Organization (brand-as-author).'),
+        pausedUntil: z
+          .string()
+          .nullable()
+          .optional()
+          .describe(
+            'Do not generate or publish AutoSEO articles for this site before this ISO date/datetime ' +
+              '(e.g. "2027-01-05"). Pass null to clear. While paused, generate calls return 409 site_paused.'
           ),
       },
     },
     async (
-      { siteId, topics, pillars, cadence, backlinkTargets, imageStyle, approvalMode, socialRepurpose, publicBaseUrl },
+      { siteId, topics, pillars, cadence, backlinkTargets, imageStyle, approvalMode, editorialReview, socialRepurpose, publicBaseUrl, publisherName, publisherUrl, authorName, authorType, pausedUntil },
       extra
     ) => {
       return toContent(
@@ -1449,8 +1715,14 @@ export function registerTools(mcpServer: McpServer, apiFor: ApiFor) {
           backlinkTargets,
           imageStyle,
           approvalMode,
+          editorialReview,
           socialRepurpose,
           publicBaseUrl,
+          publisherName,
+          publisherUrl,
+          authorName,
+          authorType,
+          pausedUntil,
         })
       );
     }
@@ -1655,7 +1927,7 @@ export function registerTools(mcpServer: McpServer, apiFor: ApiFor) {
     {
       title: 'Create Instagram DM funnel draft',
       description:
-        'Create an INACTIVE beta Instagram comment-to-DM funnel for one already-published post. The funnel matches normalized whole keywords/phrases, waits 30-120 seconds, then sends one official Private Reply containing exactly one rendered {{link}}; publicReplyTemplate is optional and OFF when omitted. This tool can only draft the funnel and cannot activate it. A signed-in human must review and activate it in the dashboard.',
+        'Create an INACTIVE Instagram comment-to-DM funnel for one already-published post. The funnel matches normalized whole keywords/phrases, waits 30-120 seconds, then sends one official Private Reply containing exactly one rendered {{link}}; publicReplyTemplate is optional and OFF when omitted. This tool can only draft the funnel and cannot activate it. A signed-in human must review and activate it in the dashboard. Selling: set promoCode (an ACTIVE Stripe promotion code, e.g. TIMETOPOST30) and the DM link carries ?promo= so checkout pre-applies it; utm_source=instagram, utm_medium=dm, utm_campaign (utmCampaign or the funnel name) and utm_content (first keyword) are added automatically unless already on leadUrl. trackClicks (default true) sends a click-tracked short link so list_dm_funnels reports hits -> sent -> clicks; signups and paid conversions show in analytics under the same utm_campaign. Keyword matching ignores case, width and apostrophes (IT\'S TIME TO POST = its time to post), and variants that collapse are deduplicated. For two offers on one post (GUIDE -> guide, IT\'S TIME TO POST -> discount) create two funnels with different keywords.',
       inputSchema: {
         name: z.string().min(1).max(100),
         integrationId: z.string().describe('Instagram integration id from list_integrations'),
@@ -1666,10 +1938,30 @@ export function registerTools(mcpServer: McpServer, apiFor: ApiFor) {
         leadUrl: z.string().url().describe('HTTPS destination substituted for {{link}}'),
         publicReplyTemplate: z.string().max(500).optional(),
         dailyCap: z.number().int().min(1).max(50).optional(),
+        promoCode: z
+          .string()
+          .regex(/^[A-Za-z0-9_-]{3,40}$/)
+          .optional()
+          .describe('Active Stripe promotion code appended as ?promo= so checkout pre-applies it'),
+        utmCampaign: z.string().max(60).optional().describe('utm_campaign; defaults to the funnel name'),
+        trackClicks: z.boolean().optional().describe('Send a click-tracked short link (default true)'),
       },
     },
     async (
-      { name, integrationId, scope, postId, keywords, dmTemplate, leadUrl, publicReplyTemplate, dailyCap },
+      {
+        name,
+        integrationId,
+        scope,
+        postId,
+        keywords,
+        dmTemplate,
+        leadUrl,
+        publicReplyTemplate,
+        dailyCap,
+        promoCode,
+        utmCampaign,
+        trackClicks,
+      },
       extra
     ) =>
       toContent(
@@ -1683,6 +1975,9 @@ export function registerTools(mcpServer: McpServer, apiFor: ApiFor) {
           leadUrl,
           publicReplyTemplate,
           dailyCap,
+          promoCode,
+          utmCampaign,
+          trackClicks,
         })
       )
   );
@@ -1692,7 +1987,7 @@ export function registerTools(mcpServer: McpServer, apiFor: ApiFor) {
     {
       title: 'List Instagram DM funnels',
       description:
-        "List this organization's post-scoped Instagram DM funnels, including Draft/Active state, account and post snapshots, keywords, today's reserved send usage, poll errors, and reconnect state. This is read-only; there is deliberately no MCP activation tool.",
+        "List this organization's post-scoped Instagram DM funnels, including Draft/Active state, account and post snapshots, keywords, today's reserved send usage, poll errors, and reconnect state. This is read-only; there is deliberately no MCP activation tool. Each funnel includes stats {hits, sent, clicks, uniqueClicks}, promoCode, utmCampaign and destinationUrl (lead URL + UTMs + promo).",
       inputSchema: {
         integrationId: z.string().optional(),
         scope: z.literal('post').optional(),
@@ -1742,6 +2037,8 @@ export function registerTools(mcpServer: McpServer, apiFor: ApiFor) {
 }
 
 export const TOOL_NAMES = [
+  'list_lemmy_communities',
+  'list_slack_channels',
   'whoami',
   'get_capabilities',
   'prompt_suggest',
@@ -1764,6 +2061,12 @@ export const TOOL_NAMES = [
   'scheduler_status',
   'create_digest_drafts',
   'create_drafts',
+  'read_article_draft',
+  'edit_article_draft',
+  'review_article_draft',
+  'list_articles',
+  'get_article',
+  'update_article',
   'list_drafts',
   'approve_draft',
   'reject_draft',

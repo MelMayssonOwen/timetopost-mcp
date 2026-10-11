@@ -48,11 +48,14 @@ export class TimeToPostApi {
   post(path: string, body?: unknown) {
     return this.request('POST', path, body);
   }
+  patch(path: string, body?: unknown) {
+    return this.request('PATCH', path, body);
+  }
   delete(path: string) {
     return this.request('DELETE', path);
   }
 
-  requestWithMcpHeader(method: 'GET' | 'POST' | 'DELETE', path: string, body?: unknown) {
+  requestWithMcpHeader(method: 'GET' | 'POST' | 'PATCH' | 'DELETE', path: string, body?: unknown) {
     return this.request(method, path, body, { 'x-ttp-client': 'mcp' });
   }
 }
