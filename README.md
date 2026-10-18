@@ -1,5 +1,7 @@
 # TimeToPost MCP server
 
+[![AllMCPs](https://allmcps.com/api/badge/timetopost?style=directory)](https://allmcps.com/mcp/timetopost)
+
 The official [Model Context Protocol](https://modelcontextprotocol.io) server for
 [TimeToPost](https://timetopost.co): draft, schedule and publish social posts,
 manage approval queues, read analytics and run AutoSEO workflows from your AI
