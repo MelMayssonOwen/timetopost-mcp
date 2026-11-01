@@ -2,10 +2,19 @@
 
 [![AllMCPs Verified](https://allmcps.com/api/badge/timetopost)](https://allmcps.com/mcp/timetopost?verify=1897fbe5-133e-4146-a15e-3e3b7662a0cb)
 
-The official [Model Context Protocol](https://modelcontextprotocol.io) server for
-[TimeToPost](https://timetopost.co): draft, schedule and publish social posts,
-manage approval queues, read analytics and run AutoSEO workflows from your AI
-assistant.
+**A social media scheduler for AI agents.** This is the official
+[Model Context Protocol](https://modelcontextprotocol.io) server for
+[TimeToPost](https://timetopost.co). Connect it to Claude, Cursor, VS Code,
+Windsurf, ChatGPT or any MCP client and your agent can write drafts, queue them
+in an approval inbox, schedule or publish posts to 16 networks, pick the best
+time to post from your own engagement history, read analytics, upload media,
+generate short videos and run AutoSEO blog workflows. Hosted, OAuth sign-in, no
+API key to copy.
+
+Use it when you want an MCP server to post to social media (X, Instagram,
+TikTok, Threads, Bluesky, Mastodon and more), schedule posts from an AI
+assistant, or give an autonomous agent a safe publishing path where a human
+approves before anything goes live.
 
 Supported networks: Instagram, X, TikTok, Threads, Bluesky, Mastodon, Nostr,
 Pixelfed, Telegram, Tumblr, WordPress, Ghost, DEV, Whop, Listmonk and Buttondown.
@@ -32,7 +41,8 @@ For Claude Code:
 claude mcp add --transport http timetopost https://api.timetopost.co/mcp
 ```
 
-For clients that accept URL-based MCP configuration:
+For Cursor, VS Code, Windsurf, Claude Desktop (via a remote connector) and other
+clients that accept URL-based MCP configuration:
 
 ```json
 {
