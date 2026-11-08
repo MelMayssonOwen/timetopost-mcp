@@ -1,0 +1,8 @@
+{
+  "name": "timetopost",
+  "version": "0.3.1",
+  "description": "Draft, approve and schedule social posts and run AutoSEO blog workflows with TimeToPost.",
+  "mcpServers": {
+    "timetopost": { "httpUrl": "https://api.timetopost.co/mcp" }
+  }
+}
