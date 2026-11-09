@@ -22,7 +22,7 @@ Coming soon: LinkedIn, YouTube, Pinterest, Discord, Slack, Lemmy, Dribbble, Kick
 
 Mirror posting: post on X and it is mirrored to your other connected networks.
 
-The hosted server exposes 70 tools; the npm/stdio package exposes 62 of them.
+The hosted server exposes 77 tools; the npm/stdio package exposes 62 of them.
 Call `get_capabilities` for what your workspace can use.
 
 - Hosted MCP endpoint: **https://api.timetopost.co/mcp**
@@ -94,7 +94,7 @@ validation and plan limits are enforced by the TimeToPost API.
 ## Tools
 
 Discover the available tools through your client's MCP tool list and use
-`get_capabilities` for current workflow details. The 70 hosted tools by area:
+`get_capabilities` for current workflow details. The hosted tools by area:
 
 | Workflow | Tools |
 | --- | --- |
