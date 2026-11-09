@@ -1,13 +1,15 @@
 {
   "name": "timetopost",
-  "version": "0.1.0",
-  "description": "Draft, approve and schedule social posts with TimeToPost. Bundles the TimeToPost MCP server and a draft-first scheduling skill.",
+  "displayName": "TimeToPost",
+  "version": "0.2.0",
+  "description": "Draft social posts, schedule them at each account's best time across 16 networks, read engagement, and run AutoSEO blog workflows with TimeToPost.",
   "author": {
-    "name": "Mel Owen",
+    "name": "Opsibyte",
     "url": "https://timetopost.co"
   },
   "homepage": "https://timetopost.co/docs/mcp/",
   "repository": "https://github.com/MelMayssonOwen/timetopost-mcp",
   "license": "MIT",
-  "keywords": ["social media", "scheduling", "mcp", "timetopost"]
+  "privacyPolicyUrl": "https://timetopost.co/privacy/",
+  "keywords": ["social media", "scheduling", "seo", "blog", "timetopost"]
 }
