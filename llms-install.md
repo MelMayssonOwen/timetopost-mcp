@@ -6,7 +6,7 @@ There are two ways to connect. Use the local stdio setup unless the user asks fo
 
 ## Option A: local stdio server (needs an API token)
 
-1. Ask the user for their TimeToPost API token. It comes from Settings, then API, in their TimeToPost dashboard. Do not invent a token and do not continue without one. Never print the token back or commit it.
+1. Ask the user for their TimeToPost API token. It comes from Settings, then API, in their TimeToPost dashboard. Do not invent a token and do not continue without one. Never print the token back or commit it. The user's own settings file is the right place for it, so write it into the `env` block in step 4.
 2. Check that Node.js 18 or later, npm and Git are installed (`node -v`, `npm -v`, `git --version`).
 3. Create the server directory, then clone and build from the repository root:
 
@@ -37,6 +37,8 @@ The built entry point is `dist/src/index.js`. If the build fails, report the err
   }
 }
 ```
+
+Write the real token into `TIMETOPOST_API_TOKEN` in the settings file. Do not leave the placeholder in place and do not ask the user to edit it later.
 
 5. Restart or refresh the server in Cline's MCP settings. The stdio server exposes 62 tools.
 6. Verify the connection by calling the `whoami` tool. It is read only. Tell the user which workspace it returns. If `whoami` fails with an authorization error, ask the user to check the token.
