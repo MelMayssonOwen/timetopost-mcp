@@ -59,10 +59,10 @@ You can revoke access from **Settings → API** in TimeToPost.
 
 ## Claude Code plugin and skill
 
-This repo is also a Claude Code plugin marketplace. The `timetopost` plugin
-bundles the hosted MCP server and a `schedule-social-posts` skill that runs the
-safe workflow: check the workspace with `whoami`, read recent posts for voice,
-draft first, let a human approve, then schedule.
+This repo is also a Claude plugin marketplace. The `timetopost` plugin in
+`plugins/timetopost` bundles the hosted MCP server and two skills:
+`schedule-social-posts` for drafting and scheduling, and
+`timetopost-autoseo-blog` for blog topic research and article drafts.
 
 ```text
 /plugin marketplace add MelMayssonOwen/timetopost-mcp
